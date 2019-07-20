@@ -1,0 +1,20 @@
+language: generic
+sudo: required
+services:
+    - docker
+before_install:
+    - docker build -t omryha/react-test -f ./client/Dockerfile.dev ./client
+script:
+    - docker run -e CI=true omryha/react-test npm test -- --coverage
+after_success:
+    - docker build -t omryha/multi-client ./client
+    - docker build -t omryha/multi-nginx ./nginx
+    - docker build -t omryha/multi-server ./server
+    - docker build -t omryha/multi-worker ./worker
+    #Login to Docker CLI after adding username and password as TravisCI Environment variables
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Take images and push them to Docker Hub
+    - docker push omryha/multi-client
+    - docker push omryha/multi-nginx
+    - docker push omryha/multi-server
+    - docker push omryha/multi-worker
